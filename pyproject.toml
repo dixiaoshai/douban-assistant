@@ -1,0 +1,23 @@
+[project]
+name = "douban-personal-assistant"
+version = "0.1.0"
+description = "A local tool for reading and organizing personal Douban book collections."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "beautifulsoup4>=4.12.3",
+  "click>=8.1.7",
+  "requests>=2.32.3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.2",
+]
+
+[project.scripts]
+douban-assistant = "douban_assistant.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
