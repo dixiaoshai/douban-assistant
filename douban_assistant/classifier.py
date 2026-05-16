@@ -33,16 +33,25 @@ CATEGORY_FROM_TAGS: "OrderedDict[str, tuple[str, ...]]" = OrderedDict(
 )
 
 
-def build_haystack(book: BookEntry) -> str:
-    return " ".join(
-        [
-            book.title,
-            " ".join(book.authors),
-            book.pub_info,
-            " ".join(book.douban_tags),
-            book.comment,
-        ]
-    ).lower()
+FIELD_WEIGHTS = {
+    "title": 5,
+    "intro": 4,
+    "comment": 3,
+    "authors": 2,
+    "pub_info": 2,
+    "douban_tags": 1,
+}
+
+
+def build_field_texts(book: BookEntry) -> dict[str, str]:
+    return {
+        "title": book.title.lower(),
+        "intro": book.intro.lower(),
+        "comment": book.comment.lower(),
+        "authors": " ".join(book.authors).lower(),
+        "pub_info": book.pub_info.lower(),
+        "douban_tags": " ".join(book.douban_tags).lower(),
+    }
 
 
 def dedupe_preserving_order(values: list[str]) -> list[str]:
@@ -55,15 +64,36 @@ def dedupe_preserving_order(values: list[str]) -> list[str]:
     return deduped
 
 
-def infer_tags(book: BookEntry) -> list[str]:
-    haystack = build_haystack(book)
-    matched: list[str] = []
+def infer_tags_with_reasons(book: BookEntry) -> tuple[list[str], dict[str, list[str]]]:
+    field_texts = build_field_texts(book)
+    best_tag = ""
+    best_score = 0
+    best_reasons: list[str] = []
+
     for tag, keywords in TAG_RULES.items():
-        for keyword in keywords:
-            if keyword.lower() in haystack:
-                matched.append(tag)
-                break
-    return dedupe_preserving_order(matched)
+        score = 0
+        hits: list[str] = []
+        for field_name, field_text in field_texts.items():
+            if not field_text:
+                continue
+            field_hits = [keyword for keyword in keywords if keyword.lower() in field_text]
+            if field_hits:
+                score += FIELD_WEIGHTS[field_name] * len(field_hits)
+                hits.extend(field_hits)
+
+        if score > best_score:
+            best_tag = tag
+            best_score = score
+            best_reasons = dedupe_preserving_order(hits)
+
+    if not best_tag:
+        return [], {}
+    return [best_tag], {best_tag: best_reasons}
+
+
+def infer_tags(book: BookEntry) -> list[str]:
+    tags, _ = infer_tags_with_reasons(book)
+    return tags
 
 
 def classify_book(book: BookEntry) -> list[str]:

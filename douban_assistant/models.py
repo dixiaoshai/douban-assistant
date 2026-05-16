@@ -13,7 +13,9 @@ class BookEntry:
     rating: int | None = None
     douban_tags: list[str] = field(default_factory=list)
     comment: str = ""
+    intro: str = ""
     predicted_tags: list[str] = field(default_factory=list)
+    tag_reasons: dict[str, list[str]] = field(default_factory=dict)
     categories: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:

@@ -15,6 +15,8 @@ def test_parse_collect_page_extracts_books() -> None:
     assert books[0].rating == 4
     assert books[0].douban_tags == ["经济", "商业", "中国"]
     assert books[0].predicted_tags == []
+    assert books[0].intro == ""
+    assert books[0].tag_reasons == {}
 
 
 def test_classify_book_uses_keywords() -> None:

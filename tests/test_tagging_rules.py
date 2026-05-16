@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from douban_assistant.classifier import classify_book, infer_tags
+from douban_assistant.classifier import classify_book, infer_tags, infer_tags_with_reasons
 from douban_assistant.models import BookEntry
 
 
@@ -17,7 +17,7 @@ class TaggingRuleTests(unittest.TestCase):
             comment="历史小说，读起来很顺",
         )
 
-        self.assertEqual(infer_tags(book), ["历史", "小说"])
+        self.assertEqual(infer_tags(book), ["历史"])
 
     def test_classify_book_maps_inferred_tags_to_project_categories(self) -> None:
         book = BookEntry(
@@ -30,7 +30,7 @@ class TaggingRuleTests(unittest.TestCase):
         )
         book.predicted_tags = infer_tags(book)
 
-        self.assertEqual(classify_book(book), ["文学", "心理学"])
+        self.assertEqual(classify_book(book), ["文学"])
 
     def test_infer_tags_can_override_sparse_existing_douban_tags(self) -> None:
         book = BookEntry(
@@ -45,6 +45,17 @@ class TaggingRuleTests(unittest.TestCase):
         inferred = infer_tags(book)
         self.assertIn("历史", inferred)
         self.assertNotIn("政治", inferred)
+
+    def test_infer_tags_uses_intro_and_records_reasons(self) -> None:
+        book = BookEntry(
+            title="测试书",
+            url="https://example.com/book",
+            intro="这是一本关于帝国、王朝和晚清变局的历史著作。",
+        )
+
+        tags, reasons = infer_tags_with_reasons(book)
+        self.assertEqual(tags, ["历史"])
+        self.assertIn("帝国", reasons["历史"])
 
 
 if __name__ == "__main__":
